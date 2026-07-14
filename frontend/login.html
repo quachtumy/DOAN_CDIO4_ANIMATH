@@ -1,0 +1,402 @@
+<!doctype html>
+
+<html class="light" lang="vi">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+		<title>Đăng nhập | Animath</title>
+		<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+			rel="stylesheet"
+		/>
+		<script id="tailwind-config">
+			tailwind.config = {
+				darkMode: 'class',
+				theme: {
+					extend: {
+						colors: {
+							'primary-fixed-dim': '#b8c3ff',
+							background: '#fdf9f0',
+							'surface-container-highest': '#dbe1ff',
+							'surface-container': '#eaedff',
+							'on-secondary-container': '#007055',
+							'on-primary-fixed-variant': '#0035bd',
+							'inverse-surface': '#222f53',
+							'on-tertiary-fixed': '#380d00',
+							'on-tertiary': '#ffffff',
+							'outline-variant': '#c4c5d9',
+							'inverse-on-surface': '#eef0ff',
+							tertiary: '#993100',
+							'on-tertiary-fixed-variant': '#812900',
+							'on-primary-fixed': '#001355',
+							'tertiary-fixed': '#ffdbcf',
+							'tertiary-container': '#c24100',
+							'surface-container-lowest': '#ffffff',
+							'on-secondary-fixed': '#002116',
+							'on-error': '#ffffff',
+							surface: '#faf8ff',
+							'on-background': '#0b1a3d',
+							'secondary-container': '#78f6ca',
+							'surface-tint': '#104af0',
+							'on-primary': '#ffffff',
+							'primary-fixed': '#dde1ff',
+							primary: '#0040df',
+							outline: '#747688',
+							'on-secondary': '#ffffff',
+							'primary-container': '#2d5bff',
+							'inverse-primary': '#b8c3ff',
+							'on-primary-container': '#efefff',
+							'tertiary-fixed-dim': '#ffb59b',
+							'on-surface': '#0b1a3d',
+							'surface-variant': '#dbe1ff',
+							'surface-container-low': '#f2f3ff',
+							secondary: '#006c51',
+							'on-tertiary-container': '#ffece6',
+							'surface-container-high': '#e3e7ff',
+							'on-error-container': '#93000a',
+							'on-secondary-fixed-variant': '#00513c',
+							error: '#ba1a1a',
+							'secondary-fixed-dim': '#5cdcb1',
+							'error-container': '#ffdad6',
+							'surface-dim': '#cfd9ff',
+							'on-surface-variant': '#434656',
+							'surface-bright': '#faf8ff',
+							'secondary-fixed': '#7bf9cd',
+						},
+						borderRadius: {
+							DEFAULT: '0.25rem',
+							lg: '0.5rem',
+							xl: '0.75rem',
+							full: '9999px',
+						},
+						spacing: {
+							gutter: '16px',
+							'stack-md': '16px',
+							'container-padding-mobile': '20px',
+							'stack-sm': '8px',
+							unit: '8px',
+							'stack-lg': '32px',
+							'container-padding-desktop': '40px',
+						},
+						fontFamily: {
+							'headline-md': ['Inter'],
+							'label-md': ['Inter'],
+							'headline-lg': ['Inter'],
+							'body-lg': ['Inter'],
+							caption: ['Inter'],
+							'headline-lg-mobile': ['Inter'],
+							'display-lg': ['Inter'],
+							'body-md': ['Inter'],
+						},
+						fontSize: {
+							'headline-md': [
+								'24px',
+								{ lineHeight: '32px', fontWeight: '600' },
+							],
+							'label-md': [
+								'14px',
+								{
+									lineHeight: '20px',
+									letterSpacing: '0.01em',
+									fontWeight: '600',
+								},
+							],
+							'headline-lg': [
+								'32px',
+								{
+									lineHeight: '40px',
+									letterSpacing: '-0.01em',
+									fontWeight: '700',
+								},
+							],
+							'body-lg': [
+								'18px',
+								{ lineHeight: '28px', fontWeight: '400' },
+							],
+							caption: [
+								'12px',
+								{ lineHeight: '16px', fontWeight: '500' },
+							],
+							'headline-lg-mobile': [
+								'28px',
+								{ lineHeight: '36px', fontWeight: '700' },
+							],
+							'display-lg': [
+								'48px',
+								{
+									lineHeight: '56px',
+									letterSpacing: '-0.02em',
+									fontWeight: '700',
+								},
+							],
+							'body-md': [
+								'16px',
+								{ lineHeight: '24px', fontWeight: '400' },
+							],
+						},
+					},
+				},
+			};
+		</script>
+		<style>
+			body {
+				font-family: 'Inter', sans-serif;
+				background-color: #fdf9f0;
+			}
+			.math-pattern-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				pointer-events: none;
+				z-index: 0;
+				opacity: 0.04;
+				background-image: radial-gradient(
+					#0040df 0.5px,
+					transparent 0.5px
+				);
+				background-size: 24px 24px;
+			}
+			.card-shadow {
+				box-shadow: 0px 4px 12px rgba(13, 27, 62, 0.05);
+			}
+			.math-symbol {
+				position: absolute;
+				color: #0040df;
+				opacity: 0.08;
+				font-size: 2rem;
+				user-select: none;
+			}
+		</style>
+	</head>
+	<body
+		class="min-h-screen flex flex-col justify-center items-center bg-background p-container-padding-mobile md:p-0"
+	>
+		<div class="math-pattern-overlay"></div>
+		<!-- Background Floating Symbols -->
+		<main class="relative z-10 w-full max-w-[440px]">
+			<!-- Login Card -->
+			<div
+				class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-stack-lg card-shadow"
+			>
+				<div class="text-center mb-stack-lg">
+					<h1
+						class="text-headline-md font-headline-md text-on-surface mb-2"
+					>
+						Chào mừng trở lại
+					</h1>
+					<p
+						class="text-body-md font-body-md text-on-surface-variant"
+					>
+						Tiếp tục hành trình chinh phục toán học của bạn.
+					</p>
+				</div>
+				<!-- Social Login -->
+				<button
+					onclick="loginGoogle()"
+					class="w-full flex items-center justify-center gap-3 bg-white border border-outline-variant hover:bg-surface-container-low transition-colors py-3 px-4 rounded-lg text-on-surface font-label-md text-label-md mb-gutter group"
+				>
+					<svg class="w-5 h-5" viewbox="0 0 24 24">
+						<path
+							d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+							fill="#4285F4"
+						></path>
+						<path
+							d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+							fill="#34A853"
+						></path>
+						<path
+							d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+							fill="#FBBC05"
+						></path>
+						<path
+							d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+							fill="#EA4335"
+						></path>
+					</svg>
+					<span>Tiếp tục với Google</span>
+				</button>
+				<!-- Separator -->
+				<div class="flex items-center my-stack-lg">
+					<div class="flex-grow h-[1px] bg-outline-variant/30"></div>
+					<span
+						class="px-4 text-caption font-caption text-outline font-bold tracking-widest"
+						>HOẶC</span
+					>
+					<div class="flex-grow h-[1px] bg-outline-variant/30"></div>
+				</div>
+				<!-- Login Form -->
+				<form id="login-form" class="space-y-stack-md">
+					<div>
+						<label
+							class="block text-label-md font-label-md text-on-surface mb-stack-sm"
+							for="email"
+							>Email</label
+						>
+						<input
+							class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none transition-all text-on-surface placeholder:text-outline/60 font-body-md text-body-md"
+							id="email"
+							name="email"
+							placeholder="ten@vidu.com"
+							required=""
+							type="email"
+						/>
+					</div>
+					<div>
+						<div
+							class="flex justify-between items-center mb-stack-sm"
+						>
+							<label
+								class="block text-label-md font-label-md text-on-surface"
+								for="password"
+								>Mật khẩu</label
+							>
+							<a
+								class="text-caption font-caption text-primary hover:underline"
+								href="#"
+								>Quên mật khẩu?</a
+							>
+						</div>
+						<div class="relative">
+							<input
+								class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none transition-all text-on-surface placeholder:text-outline/60 font-body-md text-body-md"
+								id="password"
+								name="password"
+								placeholder="••••••••"
+								required=""
+								type="password"
+							/>
+							<button
+								class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant transition-colors"
+								type="button"
+							>
+								<span
+									class="material-symbols-outlined text-[20px]"
+									>visibility</span
+								>
+							</button>
+						</div>
+					</div>
+					<div class="flex items-center">
+						<input
+							class="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary"
+							id="remember"
+							type="checkbox"
+						/>
+						<label
+							class="ml-2 text-label-md font-label-md text-on-surface-variant"
+							for="remember"
+							>Ghi nhớ đăng nhập</label
+						>
+					</div>
+					<button
+						class="w-full bg-primary-container hover:bg-primary transition-all duration-200 text-white font-label-md text-label-md py-4 rounded-lg mt-stack-md active:scale-[0.98] shadow-lg shadow-primary/10"
+						type="submit"
+					>
+						Đăng nhập
+					</button>
+				</form>
+				<!-- Sign Up Link -->
+				<div class="mt-stack-lg text-center">
+					<p
+						class="text-label-md font-label-md text-on-surface-variant"
+					>
+						Chưa có tài khoản?
+						<a
+							class="text-primary font-bold hover:underline ml-1"
+							href="#"
+							>Đăng ký ngay</a
+						>
+					</p>
+				</div>
+			</div>
+			<!-- Footer Links -->
+			<footer
+				class="mt-stack-lg flex justify-center gap-gutter text-caption font-caption text-outline"
+			>
+				<a class="hover:text-primary transition-colors" href="#"
+					>Điều khoản</a
+				>
+				<span>•</span>
+				<a class="hover:text-primary transition-colors" href="#"
+					>Bảo mật</a
+				>
+				<span>•</span>
+				<a class="hover:text-primary transition-colors" href="#"
+					>Trợ giúp</a
+				>
+			</footer>
+		</main>
+		<script type="module">
+			import { supabase } from './supabase.js';
+
+			// 1. Logic bật/tắt hiển thị mật khẩu (Giữ nguyên của bạn)
+			document
+				.querySelector('.material-symbols-outlined')
+				.parentElement.addEventListener('click', function () {
+					const input = document.getElementById('password');
+					const icon = this.querySelector(
+						'.material-symbols-outlined',
+					);
+					if (input.type === 'password') {
+						input.type = 'text';
+						icon.innerText = 'visibility_off';
+					} else {
+						input.type = 'password';
+						icon.innerText = 'visibility';
+					}
+				});
+
+			// 2. Logic Đăng nhập bằng Google
+			window.loginGoogle = async () => {
+				const { error } = await supabase.auth.signInWithOAuth({
+					provider: 'google',
+					options: {
+						redirectTo: 'http://127.0.0.1:5500/assistant.html',
+					},
+				});
+
+				if (error) {
+					alert('Lỗi Google: ' + error.message);
+				}
+			};
+
+			// 3. Logic Đăng nhập bằng Email / Mật khẩu (CÁI BẠN ĐANG THIẾU)
+			const loginForm = document.getElementById('login-form');
+			if (loginForm) {
+				loginForm.addEventListener('submit', async function (e) {
+					e.preventDefault(); // CHẶN LỖI 404 TẠI ĐÂY CỰC KỲ QUAN TRỌNG!
+
+					// Lấy giá trị user nhập vào
+					const email = document.getElementById('email').value;
+					const password = document.getElementById('password').value;
+
+					// Gọi Supabase đăng nhập
+					const { data, error } =
+						await supabase.auth.signInWithPassword({
+							email: email,
+							password: password,
+						});
+
+					if (error) {
+						alert('Đăng nhập thất bại: Sai email hoặc mật khẩu!');
+						console.error(error);
+					} else {
+						// Thành công -> Đá thẳng về trang Chat
+						window.location.href = 'assistant.html';
+					}
+				});
+			}
+		</script>
+	</body>
+</html>

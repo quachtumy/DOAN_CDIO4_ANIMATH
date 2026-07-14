@@ -16,6 +16,7 @@ You are free to structure the video to your liking but keep the following things
 - Do not adjust the manim configuration inside the code. Config adjustments like `config.quality` or `config.output_file` are forbidden.
 - Each Scene should have a title at the top and contents which are displayed below.
 - Keep in mind pacing and timing to ensure the video flows well and is engaging to watch.
+- CRITICAL VISUAL REQUIREMENT: This is a visual mathematical illustration. You must MINIMIZE the use of `Text` and `Tex` objects. Absolutely NO long explanatory paragraphs or sentences on screen. Rely on geometric construction (`Square`, `Circle`, `Polygon`), color coding, and dynamic animations (`Transform`, `FadeIn`) to convey the logic. Text must only be used for small, essential labels or brief mathematical equations.
 
 Focus on creating an asthetically pleasing and engaging video, leveraging all feautures of the manim library.
 This includes animated text, graphical elements, animations and more.

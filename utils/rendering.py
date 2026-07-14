@@ -1,7 +1,9 @@
 import os
+import time
 import subprocess
 import cv2
 import re
+import shutil
 
 def extract_scene_class_names(code: str) -> list:
     """Trích xuất tất cả tên Class kế thừa từ Scene trong code.
@@ -129,26 +131,32 @@ def extract_highest_density_frames(video_path: str, output_dir: str, count: int 
 
 def concatenate_videos(video_paths: list, output_dir: str) -> str:
     """
-    [Trụ cột 5] Sử dụng ffmpeg thông qua subprocess để nối tất cả các file phân cảnh 
-    thành một video sản phẩm hoàn chỉnh cuối cùng.
+    [Trụ cột 5] Ghép video hoặc đổi tên video nếu chỉ có 1 cảnh.
+    Luôn luôn trả về file có gắn timestamp để lưu lịch sử không bị đè.
     """
     if not video_paths:
         return ""
     
-    if len(video_paths) == 1:
-        return video_paths[0] # Chỉ có 1 scene thì không cần nối
-        
-    concat_file_path = os.path.join(output_dir, "video_list.txt")
-    final_output_path = os.path.join(output_dir, "final_complete_video.mp4")
+    # 1. Tạo tên file độc nhất ngay từ đầu cho TẤT CẢ trường hợp
+    timestamp = int(time.time())
+    final_output_path = os.path.join(output_dir, f"final_complete_video_{timestamp}.mp4")
     
-    # Tạo file text chứa danh sách video theo chuẩn định dạng ffmpeg demuxer
+    # 2. XỬ LÝ TRƯỜNG HỢP CHỈ CÓ 1 SCENE (Sửa lỗi ở đây)
+    if len(video_paths) == 1:
+        original_path = video_paths[0]
+        if os.path.exists(original_path):
+            # Copy (hoặc Move) file gốc ra thư mục ngoài và đổi tên thành file có timestamp
+            shutil.copy(original_path, final_output_path) 
+        return final_output_path 
+        
+    # 3. XỬ LÝ TRƯỜNG HỢP CÓ NHIỀU SCENE (Ghép video)
+    concat_file_path = os.path.join(output_dir, f"video_list_{timestamp}.txt")
+    
     with open(concat_file_path, "w", encoding="utf-8") as f:
         for path in video_paths:
-            # ffmpeg yêu cầu đường dẫn tuyệt đối hoặc fix dấu gạch chéo
             abs_path = os.path.abspath(path).replace("\\", "/")
             f.write(f"file '{abs_path}'\n")
             
-    # Lệnh ghép video không re-encode (cực nhanh và giữ nguyên chất lượng)
     cmd = [
         "ffmpeg", "-y", 
         "-f", "concat", 
@@ -160,10 +168,9 @@ def concatenate_videos(video_paths: list, output_dir: str) -> str:
     
     try:
         subprocess.run(cmd, capture_output=True, text=True, check=True)
-        # Dọn dẹp file cấu hình tạm
         if os.path.exists(concat_file_path):
             os.remove(concat_file_path)
-        return final_output_path
+        return final_output_path # Trả về đường dẫn đã được đóng mộc thời gian
     except Exception as e:
         print(f"[HỆ THỐNG ERROR]: Không thể ghép các phân cảnh video: {e}")
-        return video_paths[0] # Fallback trả về file đầu tiên
+        return video_paths[0]

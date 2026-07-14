@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="vi">
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+		<title>Animath Assistant - Dashboard</title>
+		<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+			rel="stylesheet"
+		/>
+		<script id="tailwind-config">
+			tailwind.config = {
+				darkMode: 'class',
+				theme: {
+					extend: {
+						colors: {
+							'tertiary-fixed': '#ffdbcf',
+							'secondary-fixed': '#7bf9cd',
+							outline: '#747688',
+							'surface-container-low': '#f2f3ff',
+							'on-surface-variant': '#434656',
+							'on-surface': '#0b1a3d',
+							primary: '#0040df',
+							'primary-container': '#2d5bff',
+							'on-primary-container': '#efefff',
+							'surface-container-highest': '#dbe1ff',
+							'surface-container': '#eaedff',
+						},
+						fontFamily: {
+							'headline-md': ['Inter'],
+							'label-md': ['Inter'],
+							'body-md': ['Inter'],
+							caption: ['Inter'],
+						},
+					},
+				},
+			};
+		</script>
+		<style>
+			.material-symbols-outlined {
+				font-variation-settings:
+					'FILL' 0,
+					'wght' 400,
+					'GRAD' 0,
+					'opsz' 24;
+			}
+			body {
+				background-color: #f8f4ea;
+			}
+			.bento-card {
+				box-shadow: 0px 4px 12px rgba(13, 27, 62, 0.05);
+			}
+			/* Tùy chỉnh thanh cuộn cho đẹp */
+			::-webkit-scrollbar {
+				width: 6px;
+			}
+			::-webkit-scrollbar-track {
+				background: transparent;
+			}
+			::-webkit-scrollbar-thumb {
+				background: #dbe1ff;
+				border-radius: 10px;
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background: #b8c3ff;
+			}
+		</style>
+	</head>
+	<body
+		class="font-body-md text-on-surface antialiased h-screen overflow-hidden"
+	>
+		<div class="w-screen h-screen bg-white overflow-hidden flex">
+			<!-- SIDEBAR (Menu trái) -->
+			<aside
+				class="w-72 bg-[#f8f2e6] border-r border-outline/10 flex flex-col p-4 shrink-0"
+			>
+				<div class="flex items-center gap-3 px-2 mb-8">
+					<span
+						class="material-symbols-outlined text-primary text-3xl"
+						style="font-variation-settings: 'FILL' 1"
+						>history</span
+					>
+					<h2
+						class="font-headline-md text-2xl text-primary font-bold"
+					>
+						Gần đây
+					</h2>
+				</div>
+				<button
+					id="new-chat-btn"
+					class="w-full py-3 px-4 bg-primary-container text-on-primary-container rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 mb-6"
+				>
+					<span class="material-symbols-outlined">add_circle</span>
+					Đoạn chat mới
+				</button>
+
+				<!-- Khu vực danh sách Chat Trống (Sẽ nạp bằng JS sau này) -->
+				<nav
+					id="chat-history-list"
+					class="flex-1 space-y-2 overflow-y-auto pr-1"
+				>
+					<div class="text-center p-4 opacity-50 text-sm mt-4">
+						<span class="material-symbols-outlined text-4xl mb-2"
+							>forum</span
+						>
+						<p>Chưa có lịch sử chat nào.</p>
+					</div>
+				</nav>
+
+				<!-- User Profile Section -->
+				<div class="mt-auto pt-4 border-t border-outline/10">
+					<div id="guest-section" class="space-y-3">
+						<div
+							class="bg-surface-container-highest/30 p-4 rounded-2xl"
+						>
+							<p class="font-bold text-on-surface">
+								Chế độ khách
+							</p>
+							<p class="text-sm text-on-surface-variant mt-1">
+								Đăng nhập để lưu lịch sử chat và video.
+							</p>
+						</div>
+						<button
+							onclick="window.location.href = 'login.html'"
+							class="w-full py-3 rounded-xl bg-primary text-white font-bold"
+						>
+							Đăng nhập
+						</button>
+					</div>
+
+					<div id="user-section" class="hidden space-y-3">
+						<!-- Đổi thành bg-[#ffffff] và thêm viền nhẹ cho nổi bật -->
+						<div
+							class="bg-[#ffffff] border border-outline/10 p-4 rounded-2xl flex items-center gap-3 shadow-sm"
+						>
+							<img
+								id="user-avatar"
+								class="w-10 h-10 rounded-full bg-white object-cover"
+							/>
+							<div class="flex-1 overflow-hidden">
+								<p
+									id="user-name"
+									class="font-label-md text-on-surface font-bold truncate"
+								></p>
+								<p
+									id="user-email"
+									class="text-xs text-outline truncate"
+								></p>
+							</div>
+						</div>
+						<button
+							onclick="logout()"
+							class="w-full py-3 rounded-xl border border-outline/20 hover:bg-surface-container transition-colors flex items-center justify-center gap-2"
+						>
+							<span class="material-symbols-outlined"
+								>logout</span
+							>
+							Đăng xuất
+						</button>
+					</div>
+				</div>
+			</aside>
+
+			<!-- MAIN CANVAS (Khu vực chat chính) -->
+			<main
+				class="flex-1 flex flex-col bg-white overflow-hidden relative"
+			>
+				<!-- Header -->
+				<header
+					class="h-16 flex items-center justify-between px-8 border-b border-outline/10 shrink-0"
+				>
+					<div class="flex items-center gap-3">
+						<div
+							class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"
+						>
+							<span
+								class="material-symbols-outlined text-primary text-xl"
+								style="font-variation-settings: 'FILL' 1"
+								>smart_toy</span
+							>
+						</div>
+						<h1
+							class="font-headline-md text-xl font-bold text-on-surface"
+						>
+							Animath Assistant
+						</h1>
+					</div>
+					<div
+						id="status-indicator"
+						class="flex items-center gap-2 bg-surface-container px-3 py-1 rounded-full transition-colors"
+					>
+						<div
+							id="status-dot"
+							class="w-2 h-2 rounded-full bg-outline"
+						></div>
+						<span
+							id="status-text"
+							class="text-xs font-bold text-outline"
+							>Đang kết nối...</span
+						>
+					</div>
+				</header>
+
+				<!-- Chat Content -->
+				<section
+					id="chat-container"
+					class="flex-1 overflow-y-auto p-8 space-y-6 scroll-smooth pb-32"
+				>
+					<!-- Lời chào ban đầu -->
+					<div class="flex justify-start">
+						<div
+							class="max-w-[90%] bg-surface-container-low border border-outline/20 p-5 rounded-2xl rounded-tl-none"
+						>
+							<p class="font-body-md text-on-surface">
+								Xin chào! Mình là <b>Animath</b>. Mình có thể
+								giúp bạn viết code Manim và tạo video giải thích
+								các định lý Toán học. Bạn muốn học về chủ đề gì
+								hôm nay?
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- KHU VỰC ẨN: Thẻ Tiến Trình & Thẻ Video (Sẽ được clone/append bằng JS) -->
+				<div class="hidden">
+					<!-- Progress Bento Card Template -->
+					<!-- Progress Bento Card Template MỚI -->
+					<div
+						id="template-progress-card"
+						class="bg-[#0b1a3d] rounded-[24px] p-8 text-white relative overflow-hidden bento-card w-full max-w-4xl mx-auto my-6"
+					>
+						<div
+							class="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[80px] -mr-32 -mt-32"
+						></div>
+						<h3 class="font-headline-md text-2xl font-bold mb-2">
+							Đang tạo video
+						</h3>
+						<p class="text-white/70 mb-10 font-body-md">
+							Thanh tiến trình cho biết Animath đang ở bước nào
+							trong quy trình.
+						</p>
+
+						<!-- Thanh ProgressBar Đồng Bộ -->
+						<div
+							class="relative flex items-center justify-between max-w-2xl mx-auto mb-8 progress-bar-container"
+						>
+							<!-- Line Nền -->
+							<div
+								class="absolute top-1/2 left-0 w-full h-[2px] bg-white/20 -translate-y-1/2"
+							></div>
+							<!-- Line Vàng (Chạy theo step) -->
+							<div
+								class="absolute top-1/2 left-0 h-[2px] bg-[#ffd166] -translate-y-1/2 transition-all duration-700 progress-line"
+								style="width: 0%"
+							></div>
+
+							<!-- 4 Vòng tròn Step -->
+							<div
+								class="step-circle relative z-10 flex items-center justify-center font-bold text-sm w-8 h-8 rounded-full bg-white/10 text-white/50 border border-white/20 transition-all duration-500"
+								data-step="1"
+							>
+								1
+							</div>
+							<div
+								class="step-circle relative z-10 flex items-center justify-center font-bold text-sm w-8 h-8 rounded-full bg-white/10 text-white/50 border border-white/20 transition-all duration-500"
+								data-step="2"
+							>
+								2
+							</div>
+							<div
+								class="step-circle relative z-10 flex items-center justify-center font-bold text-sm w-8 h-8 rounded-full bg-white/10 text-white/50 border border-white/20 transition-all duration-500"
+								data-step="3"
+							>
+								3
+							</div>
+							<div
+								class="step-circle relative z-10 flex items-center justify-center font-bold text-sm w-8 h-8 rounded-full bg-white/10 text-white/50 border border-white/20 transition-all duration-500"
+								data-step="4"
+							>
+								4
+							</div>
+						</div>
+
+						<div class="text-center">
+							<span
+								class="progress-text-display inline-block py-2 px-6 rounded-full border border-[#ffd166]/40 font-bold text-sm text-[#ffd166]"
+							>
+								Đang khởi động AI...
+							</span>
+						</div>
+					</div>
+
+					<!-- Video Preview Card Template -->
+					<div
+						id="template-video-card"
+						class="bg-white border border-outline/20 rounded-[32px] overflow-hidden bento-card w-full max-w-4xl mx-auto my-6"
+					>
+						<div
+							class="h-[400px] bg-black relative flex items-center justify-center"
+						>
+							<video
+								controls
+								class="final-video-player w-full h-full object-contain"
+							>
+								<source
+									class="final-video-source"
+									src=""
+									type="video/mp4"
+								/>
+							</video>
+						</div>
+						<div class="p-6">
+							<div class="flex items-center justify-between mb-4">
+								<div>
+									<h4
+										class="video-dynamic-title font-headline-md text-xl font-bold text-on-surface"
+									>
+										Video đã sẵn sàng
+									</h4>
+									<p
+										class="text-xs text-outline mt-1 uppercase tracking-wider font-bold"
+									>
+										HOÀN TẤT • MANIM CE
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- FOOTER INPUT -->
+				<footer
+					class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white to-transparent"
+				>
+					<div class="max-w-4xl mx-auto relative group">
+						<input
+							id="prompt-input"
+							class="w-full h-14 pl-6 pr-14 rounded-full border border-outline/30 focus:border-primary focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-outline/70 transition-all bg-white shadow-sm"
+							placeholder="Ví dụ: Minh họa định lý Pytago tam giác vuông..."
+							type="text"
+						/>
+						<button
+							id="send-btn"
+							class="absolute right-2 top-2 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
+						>
+							<span class="material-symbols-outlined"
+								>arrow_upward</span
+							>
+						</button>
+					</div>
+				</footer>
+			</main>
+		</div>
+
+		<script type="module">
+			import { supabase } from './supabase.js';
+
+			const chatContainer = document.getElementById('chat-container');
+			const promptInput = document.getElementById('prompt-input');
+			const sendBtn = document.getElementById('send-btn');
+			const statusIndicator = document.getElementById('status-indicator');
+			const statusDot = document.getElementById('status-dot');
+			const statusText = document.getElementById('status-text');
+
+			let ws;
+			let currentProgressCard = null;
+			let currentQuery = '';
+
+			// THÊM BIẾN NÀY ĐỂ LƯU TRÍ NHỚ TẠM THỜI
+			let currentHistory = [];
+
+			// 🔥 ĐIỂM MỚI 1: Khởi tạo ID cho Phiên chat hiện tại
+			let currentSessionId = Date.now().toString();
+
+			window.loadChatHistory = async () => {
+				const {
+					data: { user },
+				} = await supabase.auth.getUser();
+				if (!user) return;
+
+				// Lấy dữ liệu tăng dần (cũ -> mới) để lát nữa vẽ ra màn hình đúng thứ tự
+				const { data: historyData, error } = await supabase
+					.from('chat_history')
+					.select('*')
+					.order('created_at', { ascending: true });
+
+				if (error) {
+					console.error('Lỗi tải lịch sử: ', error);
+					return;
+				}
+
+				const historyList =
+					document.getElementById('chat-history-list');
+				if (historyData && historyData.length > 0) {
+					historyList.innerHTML = '';
+
+					// 🔥 ĐIỂM MỚI 2: Gom nhóm các tin nhắn có cùng session_id
+					const sessions = {};
+					historyData.forEach((item) => {
+						const sid = item.session_id || item.id; // Fallback cho dữ liệu cũ
+						if (!sessions[sid]) {
+							sessions[sid] = [];
+						}
+						sessions[sid].push(item);
+					});
+
+					// Sắp xếp các đoạn chat: Đoạn nào có tin nhắn mới nhất thì đẩy lên đầu Sidebar
+					const sortedSessions = Object.values(sessions).sort(
+						(a, b) => {
+							return (
+								new Date(b[b.length - 1].created_at) -
+								new Date(a[a.length - 1].created_at)
+							);
+						},
+					);
+
+					// Vẽ các nút bên Sidebar
+					sortedSessions.forEach((sessionMsgs) => {
+						const firstMsg = sessionMsgs[0];
+
+						const btn = document.createElement('button');
+						// Thêm viền trong suốt mặc định, khi hover sẽ hiện viền màu xanh (hover:border-primary/50) và nền trắng
+						btn.className =
+							'chat-history-btn w-full text-left py-3 px-4 rounded-xl border border-transparent hover:border-primary/50 hover:bg-white transition-all text-sm font-medium text-on-surface flex items-center gap-3 mb-1 group';
+						btn.innerHTML = `
+                            <span class="material-symbols-outlined text-outline text-[20px] group-hover:text-primary transition-colors">chat_bubble</span>
+                            <span class="truncate flex-1">${firstMsg.query}</span>
+                        `;
+
+						// Nếu đây là đoạn chat đang được chọn, bôi đậm viền ngay lập tức
+						if (
+							(firstMsg.session_id || firstMsg.id) ===
+							currentSessionId
+						) {
+							btn.classList.add(
+								'border-primary',
+								'bg-white',
+								'shadow-sm',
+							);
+							btn.classList.remove('border-transparent');
+						}
+
+						btn.onclick = () => {
+							// 1. TẠO HIỆU ỨNG GIAO DIỆN: Xóa viền của tất cả các nút khác
+							document
+								.querySelectorAll('.chat-history-btn')
+								.forEach((b) => {
+									b.classList.remove(
+										'border-primary',
+										'bg-white',
+										'shadow-sm',
+									);
+									b.classList.add('border-transparent');
+								});
+							// 2. Bôi đậm viền cho chính nút vừa bấm
+							btn.classList.add(
+								'border-primary',
+								'bg-white',
+								'shadow-sm',
+							);
+							btn.classList.remove('border-transparent');
+
+							// Khôi phục lại đúng phiên chat đang xem
+							currentSessionId =
+								firstMsg.session_id || firstMsg.id;
+
+							chatContainer.innerHTML = ''; // Xóa sạch màn hình
+							currentHistory = []; // Xóa trí nhớ cũ
+
+							// Đổ lại TOÀN BỘ tin nhắn
+							sessionMsgs.forEach((msg) => {
+								appendUserMessage(msg.query);
+								const videoUrl = msg.video_path.startsWith(
+									'http',
+								)
+									? msg.video_path
+									: `http://localhost:8000/${msg.video_path}`;
+								appendVideoCard(videoUrl, msg.query);
+
+								// Nạp lại dữ liệu vào não bộ AI
+								currentHistory.push({
+									role: 'user',
+									content: msg.query,
+								});
+								currentHistory.push({
+									role: 'assistant',
+									content:
+										'Tôi đã tạo xong video cho yêu cầu này.',
+								});
+							});
+							scrollToBottom();
+						};
+
+						historyList.appendChild(btn);
+					});
+				}
+			};
+
+			// Khởi tạo User
+			try {
+				const {
+					data: { user },
+				} = await supabase.auth.getUser();
+				if (user) {
+					document
+						.getElementById('guest-section')
+						.classList.add('hidden');
+					document
+						.getElementById('user-section')
+						.classList.remove('hidden');
+
+					const fullName =
+						user.user_metadata?.full_name || 'Học viên';
+					document.getElementById('user-name').textContent = fullName;
+					document.getElementById('user-email').textContent =
+						user.email;
+
+					const avatarUrl =
+						user.user_metadata?.avatar_url ||
+						`https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=0040df&color=fff`;
+					document.getElementById('user-avatar').src = avatarUrl;
+
+					loadChatHistory();
+				}
+			} catch (e) {
+				console.log('Chưa đăng nhập.');
+			}
+
+			window.logout = async () => {
+				await supabase.auth.signOut();
+				window.location.reload();
+			};
+
+			// Nút tạo Chat mới
+			const newChatBtn = document.getElementById('new-chat-btn');
+			if (newChatBtn) {
+				newChatBtn.addEventListener('click', () => {
+					currentSessionId = Date.now().toString();
+					currentHistory = []; // Reset trí nhớ về số 0
+
+					// Xóa viền bôi đậm của các lịch sử chat đang được chọn ở Sidebar
+					document
+						.querySelectorAll('.chat-history-btn')
+						.forEach((b) => {
+							b.classList.remove(
+								'border-primary',
+								'bg-white',
+								'shadow-sm',
+							);
+							b.classList.add('border-transparent');
+						});
+
+					// Xóa sạch màn hình và in lời chào mới
+					chatContainer.innerHTML = `
+                        <div class="flex justify-start">
+                            <div class="max-w-[90%] bg-surface-container-low border border-outline/20 p-5 rounded-2xl rounded-tl-none">
+                                <p class="font-body-md text-on-surface">
+                                    Xin chào! Mình là <b>Animath</b>. Mình có thể giúp bạn viết code Manim và tạo video giải thích các định lý Toán học. Bạn muốn học về chủ đề gì hôm nay?
+                                </p>
+                            </div>
+                        </div>
+                    `;
+				});
+			}
+
+			function updateConnectionStatus(isConnected) {
+				if (isConnected) {
+					statusIndicator.className =
+						'flex items-center gap-2 bg-secondary-fixed/20 px-3 py-1 rounded-full transition-colors';
+					statusDot.className = 'w-2 h-2 rounded-full bg-secondary';
+					statusText.className = 'text-xs font-bold text-secondary';
+					statusText.textContent = 'Đã kết nối';
+					promptInput.disabled = false;
+					sendBtn.disabled = false;
+				} else {
+					statusIndicator.className =
+						'flex items-center gap-2 bg-error/10 px-3 py-1 rounded-full transition-colors';
+					statusDot.className = 'w-2 h-2 rounded-full bg-error';
+					statusText.className = 'text-xs font-bold text-error';
+					statusText.textContent = 'Mất kết nối';
+					promptInput.disabled = true;
+					sendBtn.disabled = true;
+				}
+			}
+
+			function connectWebSocket() {
+				ws = new WebSocket('ws://localhost:8000/ws/generate');
+
+				ws.onopen = () => {
+					console.log('✅ Đã kết nối WebSocket');
+					updateConnectionStatus(true);
+				};
+
+				ws.onclose = () => {
+					updateConnectionStatus(false);
+					setTimeout(connectWebSocket, 3000);
+				};
+
+				ws.onmessage = async (event) => {
+					const data = JSON.parse(event.data);
+
+					if (data.type === 'info') {
+						appendAIMessage(data.message);
+					} else if (data.type === 'progress') {
+						if (currentProgressCard) {
+							currentProgressCard.querySelector(
+								'.progress-text-display',
+							).textContent = data.message;
+							if (data.step) {
+								updateProgressUI(
+									currentProgressCard,
+									data.step,
+								);
+							}
+						}
+					} else if (data.type === 'done') {
+						if (currentProgressCard) {
+							currentProgressCard.remove();
+							currentProgressCard = null;
+						}
+
+						appendVideoCard(data.video_path, currentQuery);
+
+						const {
+							data: { user },
+						} = await supabase.auth.getUser();
+						if (user && data.video_path) {
+							const { error } = await supabase
+								.from('chat_history')
+								.insert([
+									{
+										user_id: user.id,
+										query: currentQuery,
+										video_path: data.video_path,
+										session_id: currentSessionId, // 🔥 ĐIỂM MỚI 4: Kẹp mã session_id vào dữ liệu gửi lên Supabase
+									},
+								]);
+
+							if (!error) {
+								console.log('💾 Đã lưu lịch sử thành công');
+								loadChatHistory();
+							}
+						}
+					}
+				};
+			}
+
+			function appendUserMessage(text) {
+				const html = `
+                    <div class="flex justify-end">
+                        <div class="max-w-[80%] bg-primary text-white p-4 rounded-2xl rounded-tr-none shadow-sm">
+                            <p class="font-body-md">${text}</p>
+                        </div>
+                    </div>
+                `;
+				chatContainer.insertAdjacentHTML('beforeend', html);
+				scrollToBottom();
+			}
+
+			function appendAIMessage(text) {
+				const html = `
+                    <div class="flex justify-start">
+                        <div class="max-w-[90%] bg-surface-container-low border border-outline/20 p-5 rounded-2xl rounded-tl-none">
+                            <p class="font-body-md text-on-surface">${text}</p>
+                        </div>
+                    </div>
+                `;
+				chatContainer.insertAdjacentHTML('beforeend', html);
+				scrollToBottom();
+			}
+
+			function appendProgressCard() {
+				const template = document
+					.getElementById('template-progress-card')
+					.cloneNode(true);
+				template.id = '';
+				chatContainer.appendChild(template);
+				currentProgressCard = template;
+				scrollToBottom();
+			}
+
+			function appendVideoCard(videoUrl, title) {
+				const template = document
+					.getElementById('template-video-card')
+					.cloneNode(true);
+				template.id = '';
+
+				template.querySelector('.video-dynamic-title').textContent =
+					'Video: ' + title;
+
+				const videoElement = template.querySelector(
+					'.final-video-player',
+				);
+				const sourceElement = template.querySelector(
+					'.final-video-source',
+				);
+
+				sourceElement.src = videoUrl.startsWith('http')
+					? videoUrl
+					: 'http://localhost:8000/' + videoUrl;
+
+				chatContainer.appendChild(template);
+				videoElement.load();
+				videoElement.play();
+
+				scrollToBottom();
+			}
+
+			function scrollToBottom() {
+				chatContainer.scrollTop = chatContainer.scrollHeight;
+			}
+
+			function updateProgressUI(card, stepIndex) {
+				if (!card) return;
+				const circles = card.querySelectorAll('.step-circle');
+				const progressLine = card.querySelector('.progress-line');
+
+				const percentages = [0, 0, 33, 66, 100];
+				progressLine.style.width = percentages[stepIndex] + '%';
+
+				circles.forEach((circle, index) => {
+					const stepNum = index + 1;
+					circle.className =
+						'step-circle relative z-10 flex items-center justify-center font-bold text-sm transition-all duration-500';
+
+					if (stepNum < stepIndex) {
+						circle.classList.add(
+							'w-8',
+							'h-8',
+							'rounded-full',
+							'bg-[#06d6a0]',
+							'text-[#002116]',
+						);
+						circle.innerHTML =
+							'<span class="material-symbols-outlined text-sm font-bold">check</span>';
+					} else if (stepNum === stepIndex) {
+						circle.classList.add(
+							'w-10',
+							'h-10',
+							'rounded-full',
+							'bg-[#ffd166]',
+							'text-[#380d00]',
+							'border-4',
+							'border-[#0b1a3d]',
+							'shadow-[0_0_0_2px_#ffd166]',
+						);
+						circle.innerHTML = stepNum;
+					} else {
+						circle.classList.add(
+							'w-8',
+							'h-8',
+							'rounded-full',
+							'bg-white/10',
+							'text-white/50',
+							'border',
+							'border-white/20',
+						);
+						circle.innerHTML = stepNum;
+					}
+				});
+			}
+
+			function handleSend() {
+				const query = promptInput.value.trim();
+				if (!query) return;
+
+				currentQuery = query;
+				appendUserMessage(query);
+				promptInput.value = '';
+				appendProgressCard();
+
+				// Lưu câu hỏi mới vào trí nhớ
+				currentHistory.push({ role: 'user', content: query });
+
+				if (ws && ws.readyState === WebSocket.OPEN) {
+					// GÓI TOÀN BỘ LỊCH SỬ GỬI CHO PYTHON
+					ws.send(
+						JSON.stringify({
+							query: query,
+							history: currentHistory, // <--- Gửi kèm lịch sử
+						}),
+					);
+				}
+			}
+
+			sendBtn.addEventListener('click', handleSend);
+			promptInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') handleSend();
+			});
+
+			promptInput.addEventListener('focus', () => {
+				promptInput.parentElement.classList.add('drop-shadow-lg');
+			});
+			promptInput.addEventListener('blur', () => {
+				promptInput.parentElement.classList.remove('drop-shadow-lg');
+			});
+
+			connectWebSocket();
+		</script>
+	</body>
+</html>

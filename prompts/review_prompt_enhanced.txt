@@ -39,6 +39,7 @@ Put special focus on the following aspects:
 - Scene transitions and continuity
 - Overall visual polish and professional appearance
 - Be tasteful, do not overdo it, keep the styling minimal but elegant, according to modern design principles
+- TEXT MINIMIZATION: Evaluate the text-to-visual ratio. If the animation relies on long text paragraphs or explanatory sentences on the screen to explain the concept, this is a FAILURE. Instruct the writer to remove the text and replace it with geometric animations or visual transformations. Text should be restricted to brief labels and core equations only.
 
 Do NOT propose to use external resources or dependencies like svg's, images, or other libraries.
 Do NOT propose config adjustments like `config.quality` in the review.
@@ -53,3 +54,6 @@ Give feedback that will make the video more visually appealing and engaging, eve
 
 CRITICAL KNOWLEDGE CHECK:
 You must strictly verify that the current <video_code> logically and mathematically accurately represents the user's <video_data>. If the mathematical formulas, proofs, or logical concepts in the code are wrong according to the <video_data>, you MUST point them out and instruct the writer to fix the logical errors.
+
+CRITICAL TOKEN LIMIT RULE: 
+You must be extremely concise. Keep your feedback under 150 words. Use bullet points. DO NOT write long explanations. Just point out the exact errors and tell the writer exactly what lines of code or mathematical logic to change.

@@ -1,1 +1,0 @@
-VIDEO_DATA='Explain the concept of Pythagoras Methodology with visual examples'

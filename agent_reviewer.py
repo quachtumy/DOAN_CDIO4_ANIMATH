@@ -8,7 +8,7 @@ def generate_review(
     frames: list, 
     previous_reviews: list, 
     success: bool,
-    video_data: str, # [NÂNG CẤP] Thêm biến này
+    video_data: str,
     success_rate: float = 100.0,
     scenes_rendered: int = 1,
     total_scenes: int = 1

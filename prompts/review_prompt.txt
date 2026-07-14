@@ -46,3 +46,6 @@ Do not mention minor things like missing comments. Give feedback that is crucial
 
 CRITICAL KNOWLEDGE CHECK:
 You must strictly verify that the current <video_code> logically and mathematically accurately represents the user's <video_data>. If the mathematical formulas, proofs, or logical concepts in the code are wrong according to the <video_data>, you MUST point them out and instruct the writer to fix the logical errors.
+
+CRITICAL TOKEN LIMIT RULE: 
+You must be extremely concise. Keep your feedback under 150 words. Use bullet points. DO NOT write long explanations. Just point out the exact errors and tell the writer exactly what lines of code or mathematical logic to change.

@@ -1,0 +1,9 @@
+{
+	"liveServer.settings.ignoreFiles": [
+		".vscode/**",
+		"**/*.py",
+		"**/*.pyc",
+		"media/**",
+		"venv/**"
+	]
+}

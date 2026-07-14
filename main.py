@@ -1,123 +1,142 @@
-# main.py (Bản cập nhật hoàn hảo)
 import os
-import shutil
-from video_data import VIDEO_DATA
-from agent_director import generate_video_plan
-from agent_writer import generate_initial_code, generate_code_revision
-from agent_reviewer import generate_review
-from utils.rendering import extract_scene_class_names, run_manim_script, extract_highest_density_frames, concatenate_videos
+import platform
+import subprocess
+from workflow_graph import app_graph
+from utils.rendering import concatenate_videos, extract_scene_class_names # Nhớ có hàm trích xuất class này của bạn
+from utils.cache_manager import save_video_to_cache # Import hàm lưu cache
 
-MANIM_MODEL = "gemini-flash-lite-latest"  
-REVIEW_MODEL = "gemini-flash-lite-latest"
-MAX_CYCLES = 3
-OUTPUT_DIR = "media/output"
-ARTIFACTS_DIR = os.path.join(OUTPUT_DIR, "artifacts") # Thêm thư mục lưu vết
+def open_file_automatically(filepath):
+    """Hàm phụ trợ: Tự động gọi trình phát video mặc định của hệ điều hành"""
+    if not os.path.exists(filepath):
+        print(f"Không tìm thấy file để mở: {filepath}")
+        return
+
+    print(f"Đang tự động mở video: {os.path.basename(filepath)}...")
+    try:
+        if platform.system() == 'Windows':
+            os.startfile(filepath)
+        elif platform.system() == 'Darwin':  # macOS
+            subprocess.call(('open', filepath))
+        else:  # Linux
+            subprocess.call(('xdg-open', filepath))
+    except Exception as e:
+        print(f"Không thể tự động mở video. Lỗi: {e}")
 
 def main():
-    # 1. BẠN CHỈ CẦN NHẬP YÊU CẦU NGẮN GỌN VÀO ĐÂY
-    user_request = "Minh hoạ định lý Pytago bằng cách chia mỗi hình vuông thành các ô vuông nhỏ, rồi các ô vuông của cạnh a, b sẽ bay đến lấp đầy hình vuông cạnh c."
+    user_query = "Pytago là gì"
     
     print("="*50)
-    print("🚀 BẮT ĐẦU QUÁ TRÌNH TẠO VIDEO AI")
+    print("BẮT ĐẦU QUÁ TRÌNH TẠO VIDEO AI (KIẾN TRÚC LANGGRAPH)")
     print("="*50)
     
+    OUTPUT_DIR = "media/output"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
     
-    # 2. GỌI TÁC NHÂN ĐẠO DIỄN LÊN KỊCH BẢN CHI TIẾT
-    video_data = generate_video_plan(MANIM_MODEL, user_request)
+    initial_state = {
+        "user_query": user_query,
+        "current_cycle": 1,
+        "max_cycles": 3,
+        "is_perfect": False,
+        "video_paths": []
+    }
     
-    print("\n" + "-"*50)
-    print("[KỊCH BẢN CHI TIẾT ĐÃ ĐƯỢC TẠO RA]:")
-    print(video_data)
-    print("-"*50 + "\n")
+    # Chạy đồ thị AI để sinh code và render
+    final_state = app_graph.invoke(initial_state)
     
-    current_code = generate_initial_code(MANIM_MODEL, video_data)
-    previous_reviews = []
-    
-    # [NÂNG CẤP 1] Biến lưu trữ bản code hoạt động tốt gần nhất
-    working_code = None 
-    final_video_paths = []
-    
-    for cycle in range(1, MAX_CYCLES + 1):
-        print(f"\n[{'-'*15} VÒNG LẶP {cycle}/{MAX_CYCLES} {'-'*15}]")
-        
-        # [NÂNG CẤP 2] Lưu vết Artifacts (Bản nháp của từng vòng)
-        artifact_path = os.path.join(ARTIFACTS_DIR, f"cycle_{cycle}_code.py")
-        with open(artifact_path, "w", encoding="utf-8") as f:
-            f.write(current_code)
-            
-        code_path = os.path.join(OUTPUT_DIR, "temp_scene.py")
-        with open(code_path, "w", encoding="utf-8") as f:
-            f.write(current_code)
-            
-        scene_names = extract_scene_class_names(current_code)
-        if not scene_names:
-            scene_names = ["CustomScene"]
-            
-        all_success = True
-        combined_logs = ""
-        all_frames = []
-        current_cycle_videos = []
-        scenes_rendered_count = 0
-        
-        for scene in scene_names:
-            print(f"[HỆ THỐNG]: Đang render Phân cảnh: {scene}...")
-            success, logs = run_manim_script(code_path, OUTPUT_DIR, scene)
-            combined_logs += f"\n--- Logs cho Scene {scene} ---\n{logs}\n"
-            
-            if success:
-                scenes_rendered_count += 1
-                video_path = os.path.join(OUTPUT_DIR, "videos", "temp_scene", "480p15", f"{scene}.mp4")
-                if os.path.exists(video_path):
-                    current_cycle_videos.append(video_path)
-                    frame_out_dir = os.path.join(OUTPUT_DIR, f"frames_{scene}")
-                    frames = extract_highest_density_frames(video_path, frame_out_dir, count=3)
-                    all_frames.extend(frames)
-            else:
-                all_success = False
-
-        # [NÂNG CẤP 1 - Xử lý Fallback]
-        if all_success:
-            working_code = current_code # Cập nhật code an toàn nhất
-            final_video_paths = current_cycle_videos # Lưu lại các video thành công
-            print(f"[HỆ THỐNG]: Render thành công. Đã lưu bản backup an toàn.")
-            
-        success_rate = (scenes_rendered_count / len(scene_names)) * 100.0
-        
-        review = generate_review(
-            REVIEW_MODEL, current_code, combined_logs, all_frames, previous_reviews, 
-            all_success, video_data, success_rate, scenes_rendered_count, len(scene_names)
-        )
-        print(f"\n[GIÁM KHẢO PHÁN QUYẾT]:\n{review}")
-        
-        # Lưu log review vào artifacts
-        with open(os.path.join(ARTIFACTS_DIR, f"cycle_{cycle}_review.txt"), "w", encoding="utf-8") as f:
-            f.write(review)
-        
-        if all_success and "[ALL_PERFECT_APPROVED]" in review.upper():
-            break
-            
-        previous_reviews.append(review)
-        if cycle < MAX_CYCLES:
-            current_code = generate_code_revision(MANIM_MODEL, current_code, review, video_data, cycle + 1)
-        else:
-            print("\n[HỆ THỐNG]: Đã đạt giới hạn số vòng lặp.")
-
-    # [XỬ LÝ KẾT QUẢ CUỐI CÙNG DỰA TRÊN FALLBACK]
     print("\n" + "="*50)
-    if working_code is not None:
-        print("🎉 QUÁ TRÌNH HOÀN TẤT VỚI MÃ NGUỒN AN TOÀN!")
-        complete_video = concatenate_videos(final_video_paths, OUTPUT_DIR)
-        print(f"🎬 File video tổng hợp lưu tại: {complete_video}")
-        
-        # Lưu bản code chuẩn cuối cùng
-        with open(os.path.join(OUTPUT_DIR, "final_working_code.py"), "w", encoding="utf-8") as f:
-            f.write(working_code)
+    if final_state["is_perfect"]:
+        print("XUẤT SẮC! VIDEO ĐÃ ĐẠT CHUẨN THẨM MỸ.")
     else:
-        print("❌ THẤT BẠI: AI không thể tạo ra mã nguồn chạy được sau tất cả các vòng lặp.")
-        print(f"Bạn có thể xem log lỗi tại thư mục: {ARTIFACTS_DIR}")
+        print("HẾT VÒNG LẶP. Đã lưu phiên bản render cuối cùng.")
     print("="*50)
+
+    # =======================================================================
+    # BỘ LỌC THÔNG MINH: CHỈ GỘP CÁC CLASS XUẤT HIỆN TRONG ĐOẠN CODE HIỆN TẠI
+    # =======================================================================
+    video_paths = final_state.get("video_paths", [])
+    
+    # Nếu bộ nhớ State bị trống do vòng cuối lỗi, ta chủ động tái cấu trúc lại danh sách video dựa trên mã code
+    if not video_paths and final_state.get("current_code"):
+        print("Vòng lặp cuối bị lỗi, hệ thống tiến hành phân tích mã nguồn để thu hồi đúng video...")
+        
+        # 1. Đọc đoạn code cuối cùng xem nó thực sự định nghĩa những Class (Scene) nào
+        latest_code = final_state["current_code"]
+        active_scenes = extract_scene_class_names(latest_code)
+        
+        if active_scenes:
+            print(f"Các phân cảnh được định nghĩa trong code lần này: {active_scenes}")
+            # 2. Quét kiểm tra trên ổ cứng, file nào trùng tên với class trong code hiện tại mới lấy
+            recovered_paths = []
+            for scene in active_scenes:
+                # Tìm kiếm file trong thư mục temp_scene bất kể thư mục độ phân giải (480p15, 1080p60...)
+                # Khai báo một vài đường dẫn phổ biến mà Manim hay xuất ra
+                possible_paths = [
+                    f"{OUTPUT_DIR}/videos/temp_scene/480p15/{scene}.mp4",
+                    f"{OUTPUT_DIR}/videos/temp_scene/1080p60/{scene}.mp4",
+                    f"{OUTPUT_DIR}/videos/temp_scene/720p30/{scene}.mp4"
+                ]
+                
+                # Trực tiếp kiểm tra xem file có tồn tại vật lý trên ổ cứng không
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        recovered_paths.append(path)
+                        break # Tìm thấy ở độ phân giải nào thì dừng phân cảnh đó luôn
+            
+            video_paths = recovered_paths
+
+    if not video_paths:
+        print("Hoàn toàn không tìm thấy video tương ứng với code hiện tại trên ổ cứng.")
+        return
+
+    # ==================================================
+    # TIẾN HÀNH GỘP ĐÚNG DANH SÁCH ĐÃ LỌC
+    # ==================================================
+    # ==================================================
+    # TIẾN HÀNH GỘP ĐÚNG DANH SÁCH ĐÃ LỌC VÀ KIỂM DUYỆT BỞI CON NGƯỜI
+    # ==================================================
+    if len(video_paths) > 1:
+        print(f"\nSẵn sàng gộp {len(video_paths)} phân cảnh chuẩn xác của lần chạy này...")
+        try:
+            final_merged_video = concatenate_videos(video_paths, OUTPUT_DIR)
+            print(f"Gộp video thành công tại: {final_merged_video}")
+            
+            # 1. Mở video cho bạn xem trước
+            open_file_automatically(final_merged_video)
+            
+            # 2. CHỐT CHẶN CON NGƯỜI: Dừng chương trình chờ bạn xác nhận
+            print("\n" + "!"*50)
+            print("👀 HÃY XEM KỸ VIDEO VỪA MỞ TRÊN MÀN HÌNH!")
+            print("Video này có giải thích đúng bản chất Toán học và không bị lỗi hình ảnh chứ?")
+            approval = input("Bấm 'y' để LƯU VÀO KHO, hoặc phím bất kỳ để TỪ CHỐI: ")
+            
+            if approval.lower() == 'y':
+                save_video_to_cache(user_query, final_merged_video)
+                print("[THÀNH CÔNG] Đã phê duyệt và đưa vào kho Cache vĩnh viễn!")
+            else:
+                print("[TỪ CHỐI] Video có lỗi. Hệ thống KHÔNG lưu vào bộ nhớ.")
+            print("!"*50)
+
+        except Exception as e:
+            print(f"Lỗi trong quá trình gộp video: {e}")
+            open_file_automatically(video_paths[-1])
+    else:
+        # Tương tự cho trường hợp chỉ có 1 Scene
+        print("\nChỉ có 1 phân cảnh hợp lệ, đang mở video...")
+        open_file_automatically(video_paths[0])
+        
+        print("\n" + "!"*50)
+        approval = input("Video có đúng kiến thức không? Bấm 'y' để LƯU VÀO KHO, phím khác để TỪ CHỐI: ")
+        if approval.lower() == 'y':
+            save_video_to_cache(user_query, video_paths[0])
+            print("[THÀNH CÔNG] Đã phê duyệt và đưa vào kho Cache vĩnh viễn!")
+        else:
+            print("[TỪ CHỐI] Video có lỗi. Hệ thống KHÔNG lưu vào bộ nhớ.")
+
+    # Cuối hàm main()
+    if final_state.get("cached_video_path"):
+        print("\n[SIÊU TỐC]: Câu hỏi trùng khớp hệ thống. Trích xuất video trực tiếp từ kho!")
+        open_file_automatically(final_state["cached_video_path"])
+        return
 
 if __name__ == "__main__":
     main()
