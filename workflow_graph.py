@@ -75,15 +75,38 @@ def test_and_review_code(state: ManimGraphState):
         combined_logs += f"\n{logs}\n"
         if success:
             video_path = f"media/output/videos/temp_scene/480p15/{scene}.mp4"
-            frames = extract_highest_density_frames(video_path, f"media/output/frames_{scene}", count=3)
-            all_frames.extend(frames)
+
+            # Chỉ lưu nếu file thực sự tồn tại
+            if os.path.exists(video_path):
+                current_video_paths.append(video_path)
+
+                frames = extract_highest_density_frames(
+                    video_path,
+                    f"media/output/frames_{scene}",
+                    count=3
+                )
+                all_frames.extend(frames)
+            else:
+                all_success = False
+                combined_logs += (
+                    f"\nKhông tìm thấy file video sau khi render Scene '{scene}'.\n"
+                )
         else:
             all_success = False
 
-    # Mắt thần Gemini Vision đánh giá
-    # ... (phía trên giữ nguyên)
+    total_scenes = len(scenes)
+    scenes_rendered = len(current_video_paths)
+
+    success_rate = (
+        scenes_rendered / total_scenes * 100
+        if total_scenes > 0 else 0
+    )
+    previous_reviews = []
+
+    if state.get("latest_review"):
+        previous_reviews.append(state["latest_review"])
     
-    review = generate_review(MODEL_NAME, code, combined_logs, all_frames, [], all_success, description, 100, 1, 1)
+    review = generate_review(MODEL_NAME, code, combined_logs, all_frames, previous_reviews, all_success, description, success_rate, scenes_rendered, total_scenes)
     print(f"\n[GIÁM KHẢO]:\n{review}")
     
     is_perfect = "[ALL_PERFECT_APPROVED]" in review.upper()
