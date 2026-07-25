@@ -88,12 +88,6 @@ def main():
         print("Hoàn toàn không tìm thấy video tương ứng với code hiện tại trên ổ cứng.")
         return
 
-    # ==================================================
-    # TIẾN HÀNH GỘP ĐÚNG DANH SÁCH ĐÃ LỌC
-    # ==================================================
-    # ==================================================
-    # TIẾN HÀNH GỘP ĐÚNG DANH SÁCH ĐÃ LỌC VÀ KIỂM DUYỆT BỞI CON NGƯỜI
-    # ==================================================
     if len(video_paths) > 1:
         print(f"\nSẵn sàng gộp {len(video_paths)} phân cảnh chuẩn xác của lần chạy này...")
         try:
